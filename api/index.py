@@ -1,37 +1,27 @@
-from fastapi import FastAPI, HTTPException, Query
-from fastapi.middleware.cors import CORSMiddleware
-from typing import List, Optional
+from flask import Flask, request, jsonify
 import json
 import os
+from flask_cors import CORS
 
-app = FastAPI()
-
-# Enable CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins
-    allow_credentials=True,
-    allow_methods=["*"],  # Allow all methods
-    allow_headers=["*"],  # Allow all headers
-)
+app = Flask(__name__)
+# Enable CORS for all routes
+CORS(app)
 
 # Load marks data from JSON file
-data_file = os.path.join(os.path.dirname(__file__), 'data', 'q-vercel-python.json')
+data_file = os.path.join(os.path.dirname(__file__), '..', 'data', 'q-vercel-python.json')
 with open(data_file, 'r') as f:
     marks_full_list = json.load(f)
 
-@app.get("/api")
-async def get_marks(names: Optional[List[str]] = Query(None)):
-    if names is None:
-        raise HTTPException(status_code=400, detail="Names must be provided")
-    
+@app.route('/api', methods=['GET'])
+def get_marks():
+    names = request.args.getlist('names')
     marks_list = []
     for name in names:
-        mark = next((student["marks"] for student in marks_full_list if student["name"] == name), "Not Found")
+        # Find the marks for the given name, or return 0 if not found
+        mark = next((student["marks"] for student in marks_full_list if student["name"] == name), 0)
         marks_list.append(mark)
     
-    return {"marks" : marks_list}
+    return jsonify({"marks": marks_list})
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+if __name__ == '__main__':
+    app.run(debug=True)
