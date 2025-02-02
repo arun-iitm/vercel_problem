@@ -16,3 +16,7 @@ async def get_marks(names: List[str]):
         return {name: marks.get(name, "Not Found") for name in names}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
